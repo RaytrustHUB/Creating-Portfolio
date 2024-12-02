@@ -86,14 +86,9 @@ header {
     padding-left: 40px;
     padding-right: 40px;
     border-radius: 10px;
-    /* TODO: Apply a background color of #343a40 to the "Skills" section */
-    /* TODO: Set the text color of the "Skills" section to #ffffff */
-    /* TODO: Add padding of 100px 40px (top-bottom = 100px and left-right = 40px) to the "Skills" section */
-    /* TODO: Add border radius (border-radius) of 10px to the "Skills" section */
 }
 
 #skills h2 {
-    /* TODO: Set the text color of the skills heading to #ced4da */
   color: #ced4da;
 }
 
@@ -108,9 +103,6 @@ header {
     display: inline;
     font-weight: bold;
     font: #ced4da;
-    /* TODO: Set the text color of the skills list items to #ced4da */
-
-    /* TODO: Add margin of 0px 15px (top-bottom = 0px and left-right = 15px) to the li's in skills */
     margin-top: 0px;
     margin-bottom: 0px;
     margin-left: 15px;
@@ -119,8 +111,6 @@ header {
 
 
 
-/* Projects Styles */
-/** Task 4: Implement project section styles */
 #projects {
     text-align: center;
     box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.1);
@@ -221,8 +211,6 @@ header {
 
 
 
-/* Footer Styles */
-/** Task 6: Implement footer styles */
 footer {
     bottom: 0;
     width: 100%;
@@ -231,13 +219,6 @@ footer {
     color: #ffffff;
     padding: 20px;
     font-size: 1em;
-    /* TODO: Apply a background color of #343a40 to the footer */
-
-    /* TODO: Set the text color of the footer to #ffffff */
-    
-    /* TODO: Add padding of 20px to the footer */
-    
-    /* TODO: Set the font size of the footer to 1em */
 }
 .social-links {
     list-style-type: none;
