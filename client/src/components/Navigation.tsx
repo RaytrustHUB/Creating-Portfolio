@@ -101,8 +101,18 @@ export default function Navigation() {
                   {item.label}
                   <motion.span
                     className="absolute bottom-0 left-0 w-full h-0.5 bg-primary"
-                    initial={{ scaleX: 0 }}
+                    initial={{ scaleX: 0, originX: 0 }}
                     whileHover={{ scaleX: 1 }}
+                    transition={{ 
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 25,
+                    }}
+                  />
+                  <motion.span
+                    className="absolute inset-0 bg-primary/5 rounded"
+                    initial={{ scale: 0, opacity: 0 }}
+                    whileHover={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.2 }}
                   />
                 </motion.a>

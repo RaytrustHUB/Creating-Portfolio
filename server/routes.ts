@@ -1,9 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
-import { messages } from "@db/schema";
+import { messages, weatherCache } from "@db/schema";
 import { insertMessageSchema } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, gte } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
   // Contact form submission
@@ -13,6 +14,7 @@ export function registerRoutes(app: Express): Server {
       await db.insert(messages).values(validatedData);
       res.json({ success: true });
     } catch (error) {
+      console.error("Contact form error:", error);
       res.status(400).json({ error: "Invalid message data" });
     }
   });
@@ -23,41 +25,83 @@ export function registerRoutes(app: Express): Server {
       const allMessages = await db.select().from(messages).orderBy(messages.createdAt);
       res.json(allMessages);
     } catch (error) {
+      console.error("Fetch messages error:", error);
       res.status(500).json({ error: "Failed to fetch messages" });
     }
   });
 
-  // Weather API endpoint
+  // Weather API endpoint with caching
   app.get("/api/weather", async (req, res) => {
     try {
-      const city = req.query.city;
+      const city = req.query.city?.toString();
       if (!city) {
         return res.status(400).json({ error: "City parameter is required" });
       }
 
-      if (!process.env.OPENWEATHER_API_KEY) {
-        return res.status(500).json({ error: "Weather API key is not configured" });
+      const apiKey = process.env.OPENWEATHER_API_KEY;
+      if (!apiKey) {
+        console.error("OpenWeather API key is not configured");
+        return res.status(500).json({ error: "Weather service is not configured" });
       }
 
+      // Check cache first (valid for 30 minutes)
+      const cachedData = await db.select()
+        .from(weatherCache)
+        .where(
+          and(
+            eq(weatherCache.city, city.toLowerCase()),
+            gte(weatherCache.createdAt, sql`NOW() - INTERVAL '30 minutes'`)
+          )
+        )
+        .limit(1);
+
+      if (cachedData.length > 0) {
+        console.log("Serving cached weather data for:", city);
+        return res.json(JSON.parse(cachedData[0].data));
+      }
+
+      console.log("Fetching fresh weather data for:", city);
       const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city.toString())}&units=imperial&appid=${process.env.OPENWEATHER_API_KEY}`
+        `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&units=imperial&appid=${apiKey}`
       );
+
+      const data = await response.json();
       
       if (!response.ok) {
-        const errorData = await response.json();
-        return res.status(response.status).json({ 
-          error: errorData.message || "Weather API request failed",
-          code: response.status
+        console.error("OpenWeather API error:", data);
+        return res.status(response.status).json({
+          error: data.message || "Failed to fetch weather data",
+          code: response.status,
         });
       }
 
-      const data = await response.json();
+      // Cache the new data
+      try {
+        await db.insert(weatherCache)
+          .values({
+            city: city.toLowerCase(),
+            data: JSON.stringify(data),
+          })
+          .onConflictDoUpdate({
+            target: weatherCache.city,
+            set: {
+              data: JSON.stringify(data),
+              createdAt: sql`NOW()`
+            }
+          });
+
+        console.log("Weather data cached for:", city);
+      } catch (cacheError) {
+        console.error("Failed to cache weather data:", cacheError);
+        // Continue even if caching fails
+      }
+
       res.json(data);
     } catch (error) {
       console.error("Weather API error:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to fetch weather data",
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error),
       });
     }
   });

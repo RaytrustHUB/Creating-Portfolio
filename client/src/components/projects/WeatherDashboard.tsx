@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,8 +27,18 @@ export default function WeatherDashboard() {
   const [searchQuery, setSearchQuery] = useState(city);
 
   const { data: weather, isLoading, error } = useQuery<WeatherData>({
-    queryKey: [`/api/weather?city=${searchQuery}`],
+    queryKey: ["/api/weather", searchQuery],
+    queryFn: async () => {
+      const response = await fetch(`/api/weather?city=${encodeURIComponent(searchQuery)}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch weather data");
+      }
+      return response.json();
+    },
     enabled: !!searchQuery,
+    retry: false,
+    staleTime: 30000, // Cache for 30 seconds
   });
 
   const handleSearch = (e: React.FormEvent) => {

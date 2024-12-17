@@ -11,23 +11,23 @@ export default function Projects() {
       image: "https://images.unsplash.com/photo-1592210454359-9043f067919b",
       github: "#",
       demo: "/projects/weather",
-      tags: ["React", "OpenWeatherAPI", "Tailwind CSS", "TypeScript"],
+      tags: ["React", "OpenWeatherAPI", "TanStack Query", "TypeScript"],
     },
     {
-      title: "Recipe Finder",
-      description: "AI-powered recipe search engine with ingredient recognition and dietary preferences",
-      image: "https://images.unsplash.com/photo-1466637574441-749b8f19452f",
+      title: "Task Manager",
+      description: "A powerful task management application with real-time updates and collaborative features",
+      image: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b",
       github: "#",
-      demo: "#",
-      tags: ["Next.js", "API Integration", "PostgreSQL", "TailwindCSS"],
+      demo: "/projects/tasks",
+      tags: ["React", "PostgreSQL", "WebSocket", "Drizzle ORM"],
     },
     {
-      title: "Markdown Notes",
-      description: "Feature-rich markdown editor with real-time preview and cloud sync capabilities",
-      image: "https://images.unsplash.com/photo-1517842645767-c639042777db",
+      title: "Code Snippet Library",
+      description: "A searchable collection of code snippets with syntax highlighting and sharing capabilities",
+      image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6",
       github: "#",
-      demo: "#",
-      tags: ["React", "Express", "MongoDB", "Socket.io"],
+      demo: "/projects/snippets",
+      tags: ["React", "PostgreSQL", "Syntax Highlighting", "Search"],
     },
   ];
 
@@ -57,7 +57,7 @@ export default function Projects() {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.2 }}
             >
-              <Card className="h-full flex flex-col hover-card cursor-pointer">
+              <Card className="h-full flex flex-col hover-card">
                 <div
                   className="h-48 bg-cover bg-center"
                   style={{ backgroundImage: `url(${project.image})` }}
@@ -86,7 +86,7 @@ export default function Projects() {
                     </a>
                   </Button>
                   <Button size="sm" asChild>
-                    <a href={project.demo} target="_blank" rel="noopener">
+                    <a href={project.demo}>
                       <ExternalLink className="h-4 w-4 mr-2" />
                       Demo
                     </a>

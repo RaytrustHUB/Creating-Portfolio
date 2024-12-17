@@ -1,11 +1,14 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { db } from "@db";
+import { sql } from "drizzle-orm";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -36,30 +39,90 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
-  const server = registerRoutes(app);
-
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+// Database connection retry logic
+async function connectToDatabase(retries = 5, delay = 5000): Promise<void> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      log(`Attempting database connection (attempt ${i + 1}/${retries})...`);
+      await db.execute(sql`SELECT 1`);
+      log("Database connection successful");
+      return;
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      log(`Database connection failed, retrying in ${delay/1000}s...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
   }
+}
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client
-  const PORT = 5000;
-  server.listen(PORT, "0.0.0.0", () => {
-    log(`serving on port ${PORT}`);
+// Graceful shutdown handler
+function handleShutdown(server: any) {
+  let isShuttingDown = false;
+
+  const shutdown = async () => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+
+    log("Received shutdown signal, closing server...");
+    server.close(() => {
+      log("Server closed");
+      process.exit(0);
+    });
+
+    // Force exit after 10s
+    setTimeout(() => {
+      log("Forcing exit after timeout");
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
+  process.on("uncaughtException", (error) => {
+    log(`Uncaught exception: ${error.message}`);
+    shutdown();
   });
+}
+
+// Main application startup
+(async () => {
+  try {
+    // Initialize database connection
+    await connectToDatabase();
+
+    // Register routes
+    const server = registerRoutes(app);
+
+    // Error handling middleware
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+      log(`Error ${status}: ${message}`);
+      
+      if (!res.headersSent) {
+        res.status(status).json({ message });
+      }
+    });
+
+    // Setup Vite or static serving
+    if (app.get("env") === "development") {
+      await setupVite(app, server);
+      log("Vite middleware configured");
+    } else {
+      serveStatic(app);
+      log("Static serving configured");
+    }
+
+    // Start server
+    const PORT = 5000;
+    server.listen(PORT, "0.0.0.0", () => {
+      log(`Server running on port ${PORT}`);
+    });
+
+    // Setup graceful shutdown
+    handleShutdown(server);
+  } catch (error) {
+    log(`Failed to start server: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  }
 })();
