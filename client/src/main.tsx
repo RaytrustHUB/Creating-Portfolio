@@ -6,6 +6,20 @@ import { Toaster } from "@/components/ui/toaster";
 import App from './App';
 import "./index.css";
 
+// Initialize theme from localStorage or system preference
+const initializeTheme = () => {
+  const root = window.document.documentElement;
+  const theme = localStorage.getItem("theme") || "system";
+  
+  if (theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+    root.classList.add("dark");
+  } else {
+    root.classList.remove("dark");
+  }
+};
+
+initializeTheme();
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
