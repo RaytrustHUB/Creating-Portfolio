@@ -47,15 +47,102 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
   }
+}
 
+@layer base {
   * {
     @apply border-border;
-    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 200ms;
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply bg-background text-foreground;
+  }
+
+  /* Ensure smooth theme transitions */
+  body * {
+    @apply transition-colors duration-200;
+  }
+}
+
+@layer components {
+  /* Navigation link animations */
+  .nav-link {
+    @apply relative py-1 transition-all duration-300 ease-in-out;
+  }
+
+  .nav-link::after {
+    content: '';
+    @apply absolute left-0 bottom-0 w-0 h-0.5 bg-primary opacity-0 transform scale-x-0 transition-all duration-300 ease-out origin-left;
+  }
+
+  .nav-link:hover::after {
+    @apply w-full opacity-100 scale-x-100;
+  }
+
+  /* Card hover effects */
+  .hover-card {
+    @apply transform transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-lg;
+  }
+
+  .hover-card:hover {
+    @apply shadow-primary/10;
+  }
+
+  /* Button interactions */
+  .button-animation {
+    @apply relative transform transition-all duration-200 ease-in-out;
+  }
+
+  .button-animation::before {
+    content: '';
+    @apply absolute inset-0 rounded-md bg-primary/10 opacity-0 transition-opacity duration-200;
+  }
+
+  .button-animation:hover {
+    @apply -translate-y-0.5;
+  }
+
+  .button-animation:hover::before {
+    @apply opacity-100;
+  }
+
+  .button-animation:active {
+    @apply scale-95;
+  }
+
+  /* Theme toggle animations */
+  .theme-toggle-icon {
+    @apply transform transition-all duration-300 ease-in-out hover:rotate-180;
+  }
+
+  /* Menu item hover effects */
+  .menu-item {
+    @apply relative transition-all duration-200 ease-in-out overflow-hidden;
+  }
+
+  .menu-item::before {
+    content: '';
+    @apply absolute inset-0 bg-primary/5 transform -translate-x-full transition-transform duration-300 ease-in-out;
+  }
+
+  .menu-item:hover::before {
+    @apply translate-x-0;
+  }
+
+  /* Page transitions */
+  .page-transition-enter {
+    @apply opacity-0 transform translate-y-4;
+  }
+
+  .page-transition-enter-active {
+    @apply opacity-100 transform translate-y-0 transition-all duration-300 ease-out;
+  }
+
+  .page-transition-exit {
+    @apply opacity-100 transform translate-y-0;
+  }
+
+  .page-transition-exit-active {
+    @apply opacity-0 transform -translate-y-4 transition-all duration-300 ease-in;
   }
 }

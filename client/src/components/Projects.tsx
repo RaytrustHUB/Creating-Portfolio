@@ -57,7 +57,7 @@ export default function Projects() {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.2 }}
             >
-              <Card className="h-full flex flex-col">
+              <Card className="h-full flex flex-col hover-card cursor-pointer">
                 <div
                   className="h-48 bg-cover bg-center"
                   style={{ backgroundImage: `url(${project.image})` }}

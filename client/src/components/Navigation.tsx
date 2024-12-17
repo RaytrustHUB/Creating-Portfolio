@@ -1,8 +1,34 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+
+const menuVariants = {
+  closed: {
+    opacity: 0,
+    height: 0,
+    transition: { duration: 0.3, ease: "easeInOut" }
+  },
+  open: {
+    opacity: 1,
+    height: "auto",
+    transition: { duration: 0.3, ease: "easeInOut" }
+  }
+};
+
+const menuItemVariants = {
+  closed: { x: -16, opacity: 0 },
+  open: (i: number) => ({
+    x: 0,
+    opacity: 1,
+    transition: {
+      delay: i * 0.1,
+      duration: 0.3,
+      ease: "easeOut"
+    }
+  })
+};
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,63 +41,134 @@ export default function Navigation() {
   ];
 
   return (
-    <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-sm border-b">
-      <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <a href="#home" className="text-2xl font-bold">
+    <motion.header 
+      className="fixed top-0 w-full z-50 border-b"
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+    >
+      <nav className="container mx-auto px-4 h-16 flex items-center justify-between bg-background/80 backdrop-blur-sm">
+        <motion.a 
+          href="/"
+          className="text-2xl font-bold text-foreground hover:text-primary"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        >
           Portfolio
-        </a>
+        </motion.a>
 
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center space-x-8">
-          <ul className="flex space-x-8">
+          <motion.ul 
+            className="flex space-x-8"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.1
+                }
+              }
+            }}
+          >
             {menuItems.map((item) => (
-              <li key={item.href}>
-                <a
+              <motion.li 
+                key={item.href}
+                variants={{
+                  hidden: { y: 20, opacity: 0 },
+                  visible: { y: 0, opacity: 1 }
+                }}
+              >
+                <motion.a
                   href={item.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="nav-link text-muted-foreground hover:text-foreground px-1 relative inline-block"
+                  whileHover={{ y: -2 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
                   {item.label}
-                </a>
-              </li>
+                </motion.a>
+              </motion.li>
             ))}
-          </ul>
+          </motion.ul>
           <ThemeToggle />
         </div>
 
         {/* Mobile Menu Button */}
-        <Button
-          variant="ghost"
-          size="icon"
+        <motion.div
           className="md:hidden"
-          onClick={() => setIsOpen(!isOpen)}
+          whileTap={{ scale: 0.95 }}
         >
-          {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsOpen(!isOpen)}
+            className="hover:bg-transparent relative"
+          >
+            <AnimatePresence mode="wait">
+              {isOpen ? (
+                <motion.div
+                  key="close"
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <X className="h-6 w-6" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="menu"
+                  initial={{ rotate: 90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: -90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Menu className="h-6 w-6" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Button>
+        </motion.div>
 
         {/* Mobile Menu */}
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="absolute top-16 left-0 right-0 bg-background border-b md:hidden"
-          >
-            <ul className="container mx-auto px-4 py-4 space-y-4">
-              {menuItems.map((item) => (
-                <li key={item.href}>
-                  <a
-                    href={item.href}
-                    className="block text-muted-foreground hover:text-foreground transition-colors"
-                    onClick={() => setIsOpen(false)}
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              variants={menuVariants}
+              initial="closed"
+              animate="open"
+              exit="closed"
+              className="absolute top-16 left-0 right-0 bg-background/95 backdrop-blur-sm border-b md:hidden overflow-hidden"
+            >
+              <motion.ul 
+                className="container mx-auto px-4 py-4 space-y-4"
+                initial="closed"
+                animate="open"
+                exit="closed"
+              >
+                {menuItems.map((item, index) => (
+                  <motion.li
+                    key={item.href}
+                    custom={index}
+                    variants={menuItemVariants}
                   >
-                    {item.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-        )}
+                    <a
+                      href={item.href}
+                      className="block nav-link text-muted-foreground hover:text-foreground text-lg font-medium"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {item.label}
+                    </a>
+                  </motion.li>
+                ))}
+              </motion.ul>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
-    </header>
+    </motion.header>
   );
 }

@@ -3,11 +3,13 @@ import { useState, useEffect } from "react";
 type Theme = "dark" | "light" | "system";
 
 function getSystemTheme(): "dark" | "light" {
+  if (typeof window === "undefined") return "light";
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === "undefined") return "system";
     return (localStorage.getItem("theme") as Theme) || "system";
   });
 
@@ -16,19 +18,13 @@ export function useTheme() {
     
     function updateTheme() {
       root.classList.remove("light", "dark");
-      
-      if (theme === "system") {
-        root.classList.add(getSystemTheme());
-      } else {
-        root.classList.add(theme);
-      }
-      
+      const effectiveTheme = theme === "system" ? getSystemTheme() : theme;
+      root.classList.add(effectiveTheme);
       localStorage.setItem("theme", theme);
     }
 
     updateTheme();
 
-    // Listen for system theme changes
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = () => {
       if (theme === "system") {
