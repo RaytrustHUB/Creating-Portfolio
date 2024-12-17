@@ -117,12 +117,18 @@
 
   /* Menu item hover effects */
   .menu-item {
-    @apply relative transition-all duration-200 ease-in-out overflow-hidden;
+    @apply relative transition-colors duration-200 ease-in-out overflow-hidden;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .menu-item:hover {
+    color: hsl(var(--foreground));
   }
 
   .menu-item::before {
     content: '';
-    @apply absolute inset-0 bg-primary/5 transform -translate-x-full transition-transform duration-300 ease-in-out;
+    @apply absolute inset-0 transform -translate-x-full transition-transform duration-300 ease-in-out;
+    background-color: hsl(var(--primary) / 0.05);
   }
 
   .menu-item:hover::before {

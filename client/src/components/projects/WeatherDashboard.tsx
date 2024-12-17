@@ -93,7 +93,20 @@ export default function WeatherDashboard() {
         ) : error ? (
           <Card>
             <CardContent className="p-6">
-              <p className="text-destructive">Failed to load weather data</p>
+              <div className="flex flex-col items-center gap-4">
+                <p className="text-destructive text-center">
+                  {error instanceof Error && error.message.includes("API key") 
+                    ? "Weather API key not configured. Please contact the administrator."
+                    : "Failed to load weather data. Please try again later."}
+                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setSearchQuery(city)}
+                  className="w-full max-w-xs"
+                >
+                  Retry
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ) : weather ? (
