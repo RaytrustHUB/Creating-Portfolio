@@ -6,28 +6,28 @@ import { Github, ExternalLink } from "lucide-react";
 export default function Projects() {
   const projects = [
     {
-      title: "E-commerce Platform",
-      description: "A full-stack e-commerce solution built with React and Node.js",
-      image: "https://images.unsplash.com/photo-1640622842008-1897f26aafe3",
+      title: "Weather Dashboard",
+      description: "Real-time weather forecasting with interactive maps and detailed meteorological data visualization",
+      image: "https://images.unsplash.com/photo-1592210454359-9043f067919b",
       github: "#",
-      demo: "#",
-      tags: ["React", "Node.js", "PostgreSQL"],
+      demo: "/projects/weather",
+      tags: ["React", "OpenWeatherAPI", "Tailwind CSS", "TypeScript"],
     },
     {
-      title: "Task Management App",
-      description: "Real-time task management application with team collaboration",
-      image: "https://images.unsplash.com/photo-1640622307877-1e40352b9a48",
+      title: "Recipe Finder",
+      description: "AI-powered recipe search engine with ingredient recognition and dietary preferences",
+      image: "https://images.unsplash.com/photo-1466637574441-749b8f19452f",
       github: "#",
       demo: "#",
-      tags: ["Vue.js", "Express", "MongoDB"],
+      tags: ["Next.js", "API Integration", "PostgreSQL", "TailwindCSS"],
     },
     {
-      title: "Portfolio Website",
-      description: "Modern portfolio website with animations and dark mode",
-      image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40",
+      title: "Markdown Notes",
+      description: "Feature-rich markdown editor with real-time preview and cloud sync capabilities",
+      image: "https://images.unsplash.com/photo-1517842645767-c639042777db",
       github: "#",
       demo: "#",
-      tags: ["React", "Tailwind", "Framer Motion"],
+      tags: ["React", "Express", "MongoDB", "Socket.io"],
     },
   ];
 

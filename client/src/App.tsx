@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import About from "./pages/About";
 import Projects from "./pages/Projects";
 import Contact from "./pages/Contact";
+import WeatherDashboard from "./pages/WeatherDashboard";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
       <Route path="/about" component={About} />
       <Route path="/projects" component={Projects} />
       <Route path="/contact" component={Contact} />
+      <Route path="/projects/weather" component={WeatherDashboard} />
       <Route component={NotFound} />
     </Switch>
   );
