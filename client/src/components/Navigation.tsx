@@ -85,10 +85,26 @@ export default function Navigation() {
                 <motion.a
                   href={item.href}
                   className="nav-link text-muted-foreground hover:text-foreground px-1 relative inline-block"
-                  whileHover={{ y: -2 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  whileHover={{ 
+                    y: -2, 
+                    scale: 1.1,
+                    color: "hsl(var(--primary))",
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 400, 
+                    damping: 17,
+                    duration: 0.2 
+                  }}
                 >
                   {item.label}
+                  <motion.span
+                    className="absolute bottom-0 left-0 w-full h-0.5 bg-primary"
+                    initial={{ scaleX: 0 }}
+                    whileHover={{ scaleX: 1 }}
+                    transition={{ duration: 0.2 }}
+                  />
                 </motion.a>
               </motion.li>
             ))}
