@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Code2, Palette, Globe } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
+import SkillProgress from "@/components/SkillProgress";
 
 export default function About() {
   const skills = [
@@ -21,6 +22,14 @@ export default function About() {
       title: "UI/UX Design",
       description: "Figma, Adobe XD, Responsive Design",
     },
+  ];
+
+  const technicalSkills = [
+    { name: "React/Next.js", level: 90, color: "hsl(var(--primary))" },
+    { name: "TypeScript", level: 85, color: "hsl(217 91% 60%)" },
+    { name: "Node.js", level: 80, color: "hsl(142 76% 36%)" },
+    { name: "PostgreSQL", level: 75, color: "hsl(221 83% 53%)" },
+    { name: "AWS", level: 70, color: "hsl(32 95% 44%)" },
   ];
 
   return (
@@ -75,6 +84,16 @@ export default function About() {
               </motion.div>
             ))}
           </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="max-w-2xl mx-auto mt-16"
+          >
+            <h3 className="text-2xl font-bold mb-8 text-center">Technical Skills</h3>
+            <SkillProgress skills={technicalSkills} />
+          </motion.div>
         </main>
       </div>
     </PageTransition>
