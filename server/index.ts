@@ -3,9 +3,12 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { db } from "@db";
 import { sql } from "drizzle-orm";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Verify required environment variables
-const requiredEnvVars = ['DATABASE_URL', 'OPENWEATHER_API_KEY'];
+const requiredEnvVars = ["DATABASE_URL", "OPENWEATHER_API_KEY"];
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
     throw new Error(`${envVar} environment variable is required`);
@@ -55,11 +58,11 @@ async function connectToDatabase(retries = 5, delay = 5000): Promise<void> {
   for (let i = 0; i < retries; i++) {
     try {
       log(`Attempting database connection (attempt ${i + 1}/${retries})...`);
-      
+
       // Verify database connection
       const result = await db.execute(sql`SELECT 1`);
       if (!result) throw new Error("Database connection test failed");
-      
+
       // Verify tables exist by checking schema
       await db.execute(sql`
         SELECT EXISTS (
@@ -68,20 +71,21 @@ async function connectToDatabase(retries = 5, delay = 5000): Promise<void> {
           AND tablename IN ('messages', 'weather_cache')
         )
       `);
-      
+
       log("Database connection and schema verification successful");
       return;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       log(`Database connection error: ${errorMessage}`);
-      
+
       if (i === retries - 1) {
         log("Maximum retry attempts reached");
         throw new Error(`Failed to connect to database: ${errorMessage}`);
       }
-      
-      log(`Retrying in ${delay/1000}s...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+
+      log(`Retrying in ${delay / 1000}s...`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 }
@@ -95,7 +99,11 @@ function handleShutdown(server: any) {
       // Attempt to close database connections
       await db.execute(sql`SELECT pg_terminate_backend(pg_backend_pid())`);
     } catch (error) {
-      log(`Error during database cleanup: ${error instanceof Error ? error.message : String(error)}`);
+      log(
+        `Error during database cleanup: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -104,7 +112,7 @@ function handleShutdown(server: any) {
     isShuttingDown = true;
 
     log("Received shutdown signal, beginning graceful shutdown...");
-    
+
     try {
       await cleanup();
       server.close(() => {
@@ -118,7 +126,11 @@ function handleShutdown(server: any) {
         process.exit(1);
       }, 10000);
     } catch (error) {
-      log(`Error during shutdown: ${error instanceof Error ? error.message : String(error)}`);
+      log(
+        `Error during shutdown: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
       process.exit(1);
     }
   };
@@ -135,7 +147,7 @@ function handleShutdown(server: any) {
 (async () => {
   try {
     log("Starting application initialization...");
-    
+
     // Verify environment variables
     if (!process.env.DATABASE_URL) {
       throw new Error("DATABASE_URL environment variable is required");
@@ -157,12 +169,12 @@ function handleShutdown(server: any) {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
       log(`Error ${status}: ${message}`);
-      
+
       if (!res.headersSent) {
-        res.status(status).json({ 
+        res.status(status).json({
           error: message,
           status,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
     });
@@ -184,10 +196,14 @@ function handleShutdown(server: any) {
 
     // Setup graceful shutdown
     handleShutdown(server);
-    
+
     log("Application initialization completed successfully");
   } catch (error) {
-    log(`Fatal error during startup: ${error instanceof Error ? error.message : String(error)}`);
+    log(
+      `Fatal error during startup: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
     process.exit(1);
   }
 })();

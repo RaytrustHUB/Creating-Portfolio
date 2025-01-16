@@ -1,6 +1,9 @@
 import { pgTable, text, serial, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Messages table for contact form
 export const messages = pgTable("messages", {
@@ -8,7 +11,7 @@ export const messages = pgTable("messages", {
   name: text("name").notNull(),
   email: text("email").notNull(),
   message: text("message").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Weather cache table to reduce API calls
@@ -16,7 +19,7 @@ export const weatherCache = pgTable("weather_cache", {
   id: serial("id").primaryKey(),
   city: text("city").notNull().unique(),
   data: text("data").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertMessageSchema = createInsertSchema(messages);

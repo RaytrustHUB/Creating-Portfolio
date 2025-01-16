@@ -5,6 +5,9 @@ import { messages, weatherCache } from "@db/schema";
 import { insertMessageSchema } from "@db/schema";
 import { eq, and, gte } from "drizzle-orm";
 import { sql } from "drizzle-orm";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export function registerRoutes(app: Express): Server {
   // Contact form submission
@@ -22,7 +25,10 @@ export function registerRoutes(app: Express): Server {
   // Get all messages
   app.get("/api/messages", async (_req, res) => {
     try {
-      const allMessages = await db.select().from(messages).orderBy(messages.createdAt);
+      const allMessages = await db
+        .select()
+        .from(messages)
+        .orderBy(messages.createdAt);
       res.json(allMessages);
     } catch (error) {
       console.error("Fetch messages error:", error);
@@ -41,11 +47,14 @@ export function registerRoutes(app: Express): Server {
       const apiKey = process.env.OPENWEATHER_API_KEY;
       if (!apiKey) {
         console.error("OpenWeather API key is not configured");
-        return res.status(500).json({ error: "Weather service is not configured" });
+        return res
+          .status(500)
+          .json({ error: "Weather service is not configured" });
       }
 
       // Check cache first (valid for 30 minutes)
-      const cachedData = await db.select()
+      const cachedData = await db
+        .select()
         .from(weatherCache)
         .where(
           and(
@@ -62,11 +71,13 @@ export function registerRoutes(app: Express): Server {
 
       console.log("Fetching fresh weather data for:", city);
       const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&units=imperial&appid=${apiKey}`
+        `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(
+          city
+        )}&units=imperial&appid=${apiKey}`
       );
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         console.error("OpenWeather API error:", data);
         return res.status(response.status).json({
@@ -77,7 +88,8 @@ export function registerRoutes(app: Express): Server {
 
       // Cache the new data
       try {
-        await db.insert(weatherCache)
+        await db
+          .insert(weatherCache)
           .values({
             city: city.toLowerCase(),
             data: JSON.stringify(data),
@@ -86,8 +98,8 @@ export function registerRoutes(app: Express): Server {
             target: weatherCache.city,
             set: {
               data: JSON.stringify(data),
-              createdAt: sql`NOW()`
-            }
+              createdAt: sql`NOW()`,
+            },
           });
 
         console.log("Weather data cached for:", city);
