@@ -6,6 +6,8 @@ import About from "./pages/About";
 import Projects from "./pages/Projects";
 import Contact from "./pages/Contact";
 import WeatherDashboard from "./pages/WeatherDashboard";
+import SnippetsPage from "./pages/SnippetsPage";
+import TaskManagerPage from "./pages/TaskManagerPage";
 
 function App() {
   return (
@@ -15,6 +17,8 @@ function App() {
       <Route path="/projects" component={Projects} />
       <Route path="/contact" component={Contact} />
       <Route path="/projects/weather" component={WeatherDashboard} />
+      <Route path="/projects/snippets" component={SnippetsPage} />
+      <Route path="/projects/tasks" component={TaskManagerPage} />
       <Route component={NotFound} />
     </Switch>
   );
