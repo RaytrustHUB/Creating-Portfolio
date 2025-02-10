@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Tag, X } from "lucide-react";
-import CodeEditor from "@uiw/react-textarea-code-editor";
+import { Plus, Search, Tag, X, Pencil, Trash2 } from "lucide-react";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { SnippetDialog } from "./SnippetDialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface Snippet {
   id: number;
@@ -23,6 +24,10 @@ interface Snippet {
 export default function CodeSnippetLibrary() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedSnippet, setSelectedSnippet] = useState<Snippet | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch snippets with search and tag filters
   const { data: snippets, isLoading } = useQuery<Snippet[]>({
@@ -47,11 +52,33 @@ export default function CodeSnippetLibrary() {
     }
   });
 
+  // Delete mutation
+  const deleteSnippet = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/snippets/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete snippet');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['snippets'] });
+      queryClient.invalidateQueries({ queryKey: ['tags'] });
+      toast({
+        title: "Success",
+        description: "Snippet deleted successfully",
+      });
+    },
+  });
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">Code Snippet Library</h1>
-        <Button>
+        <Button onClick={() => {
+          setSelectedSnippet(null);
+          setDialogOpen(true);
+        }}>
           <Plus className="w-4 h-4 mr-2" />
           New Snippet
         </Button>
@@ -106,7 +133,29 @@ export default function CodeSnippetLibrary() {
               <CardHeader>
                 <CardTitle className="flex justify-between items-start">
                   <span>{snippet.title}</span>
-                  <Badge variant="secondary">{snippet.language}</Badge>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setSelectedSnippet(snippet);
+                        setDialogOpen(true);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        if (confirm("Are you sure you want to delete this snippet?")) {
+                          deleteSnippet.mutate(snippet.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </CardTitle>
                 {snippet.description && (
                   <p className="text-sm text-muted-foreground">{snippet.description}</p>
@@ -123,7 +172,7 @@ export default function CodeSnippetLibrary() {
                   </SyntaxHighlighter>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-4">
-                  {snippet.tags.map((tag) => (
+                  {snippet.tags?.map((tag) => (
                     <Badge key={tag} variant="outline" className="text-xs">
                       {tag}
                     </Badge>
@@ -137,6 +186,12 @@ export default function CodeSnippetLibrary() {
           ))}
         </div>
       )}
+
+      <SnippetDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        snippet={selectedSnippet}
+      />
     </div>
   );
 }
