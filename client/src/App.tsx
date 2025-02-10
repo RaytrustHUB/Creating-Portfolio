@@ -8,6 +8,7 @@ import Contact from "./pages/Contact";
 import WeatherDashboard from "./pages/WeatherDashboard";
 import SnippetsPage from "./pages/SnippetsPage";
 import TaskManagerPage from "./pages/TaskManagerPage";
+import PasswordGeneratorPage from "./pages/PasswordGeneratorPage";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
       <Route path="/projects/weather" component={WeatherDashboard} />
       <Route path="/projects/snippets" component={SnippetsPage} />
       <Route path="/projects/tasks" component={TaskManagerPage} />
+      <Route path="/projects/password-generator" component={PasswordGeneratorPage} />
       <Route component={NotFound} />
     </Switch>
   );
