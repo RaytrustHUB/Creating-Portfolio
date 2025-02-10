@@ -145,7 +145,7 @@ export default function Projects() {
                 </motion.div>
               ))}
           </AnimatePresence>
-          </div>
+        </div>
       </div>
     </section>
   );
