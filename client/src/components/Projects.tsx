@@ -33,6 +33,14 @@ export default function Projects() {
       demo: "/projects/snippets",
       tags: ["React", "PostgreSQL", "Syntax Highlighting", "Search"],
     },
+    {
+      title: "Password Generator",
+      description: "A secure password generator with customizable options for length and character types",
+      image: "https://images.unsplash.com/photo-1614064641938-3bbee52942c7",
+      github: "#",
+      demo: "/projects/password-generator",
+      tags: ["React", "TypeScript", "Security", "Cryptography"],
+    },
   ];
 
   return (
