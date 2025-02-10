@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
-import { messages, weatherCache, snippets, tags, snippetTags } from "@db/schema";
+import { messages, weatherCache, snippets, tags, snippetTags, tasks } from "@db/schema";
 import { insertMessageSchema, insertSnippetSchema, insertTagSchema } from "@db/schema";
 import { eq, and, gte, like, desc, or } from "drizzle-orm";
 import { sql } from "drizzle-orm";
@@ -317,6 +317,89 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Fetch tags error:", error);
       res.status(500).json({ error: "Failed to fetch tags" });
+    }
+  });
+
+
+  // Task Manager API Routes
+
+  // Get all tasks
+  app.get("/api/tasks", async (_req, res) => {
+    try {
+      const allTasks = await db
+        .select()
+        .from(tasks)
+        .orderBy(desc(tasks.updatedAt));
+      res.json(allTasks);
+    } catch (error) {
+      console.error("Fetch tasks error:", error);
+      res.status(500).json({ error: "Failed to fetch tasks" });
+    }
+  });
+
+  // Create a new task
+  app.post("/api/tasks", async (req, res) => {
+    try {
+      const [task] = await db
+        .insert(tasks)
+        .values({
+          title: req.body.title,
+          description: req.body.description,
+          status: req.body.status || "pending",
+          priority: req.body.priority || "medium",
+          dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
+        })
+        .returning();
+      res.status(201).json(task);
+    } catch (error) {
+      console.error("Create task error:", error);
+      res.status(400).json({ error: "Failed to create task" });
+    }
+  });
+
+  // Update a task
+  app.put("/api/tasks/:id", async (req, res) => {
+    try {
+      const [task] = await db
+        .update(tasks)
+        .set({
+          title: req.body.title,
+          description: req.body.description,
+          status: req.body.status,
+          priority: req.body.priority,
+          dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
+          updatedAt: new Date(),
+        })
+        .where(eq(tasks.id, parseInt(req.params.id)))
+        .returning();
+
+      if (!task) {
+        return res.status(404).json({ error: "Task not found" });
+      }
+
+      res.json(task);
+    } catch (error) {
+      console.error("Update task error:", error);
+      res.status(400).json({ error: "Failed to update task" });
+    }
+  });
+
+  // Delete a task
+  app.delete("/api/tasks/:id", async (req, res) => {
+    try {
+      const [task] = await db
+        .delete(tasks)
+        .where(eq(tasks.id, parseInt(req.params.id)))
+        .returning();
+
+      if (!task) {
+        return res.status(404).json({ error: "Task not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete task error:", error);
+      res.status(400).json({ error: "Failed to delete task" });
     }
   });
 
