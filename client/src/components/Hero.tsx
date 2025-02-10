@@ -53,7 +53,7 @@ export default function Hero() {
             transition={{ delay: 0.6 }}
           >
             <Button asChild size="lg">
-              <a href="#projects">
+              <a href="projects#">
                 View My Work
                 <ArrowRight className="ml-2 h-4 w-4" />
               </a>

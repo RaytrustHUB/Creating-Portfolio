@@ -403,6 +403,31 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Delete a snippet
+  app.delete("/api/snippets/:id", async (req, res) => {
+    try {
+      // First delete the snippet-tag relationships
+      await db
+        .delete(snippetTags)
+        .where(eq(snippetTags.snippetId, parseInt(req.params.id)));
+
+      // Then delete the snippet
+      const [deletedSnippet] = await db
+        .delete(snippets)
+        .where(eq(snippets.id, parseInt(req.params.id)))
+        .returning();
+
+      if (!deletedSnippet) {
+        return res.status(404).json({ error: "Snippet not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete snippet error:", error);
+      res.status(400).json({ error: "Failed to delete snippet" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
