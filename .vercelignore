@@ -1,9 +1,11 @@
 # Vercel ignore file - files/folders to exclude from deployment
 
 # Development files
-server/
+# NOTE: server/ is NOT excluded - it's needed for API functions via includeFiles
 scripts/
 attached_assets/
+server/index.ts
+server/vite.ts
 
 # Build artifacts (will be regenerated)
 dist/
