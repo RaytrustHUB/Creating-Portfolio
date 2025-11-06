@@ -1,0 +1,31 @@
+"id","title","description","code","language","created_at","updated_at"
+"1","React useState Hook Example","A basic example of using the useState hook in React","const [count, setCount] = useState(0);
+
+function increment() {
+  setCount(prev => prev + 1);
+}
+
+return (
+  <button onClick={increment}>
+    Count is {count}
+  </button>
+);","javascript","""2025-02-10T18:48:13.091Z""","""2025-02-10T18:48:13.091Z"""
+"2","Express Route Handler","Basic Express.js route handler with error handling","app.get(""/api/items"", async (req, res) => {
+  try {
+    const items = await db.query(""SELECT * FROM items"");
+    res.json(items);
+  } catch (error) {
+    console.error(""Error fetching items:"", error);
+    res.status(500).json({ error: ""Failed to fetch items"" });
+  }
+});","javascript","""2025-02-10T18:48:13.091Z""","""2025-02-10T18:48:13.091Z"""
+"3","Python List Comprehension","Example of list comprehension in Python","# Traditional way
+squares = []
+for x in range(10):
+    squares.append(x**2)
+
+# Using list comprehension
+squares = [x**2 for x in range(10)]
+
+# With condition
+even_squares = [x**2 for x in range(10) if x % 2 == 0]","python","""2025-02-10T18:48:13.091Z""","""2025-02-10T18:48:13.091Z"""
