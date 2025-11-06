@@ -18,10 +18,7 @@
         "server/**",
         "db/**"
       ],
-      "excludeFiles": [
-        "server/index.ts",
-        "server/vite.ts"
-      ]
+      "excludeFiles": "server/index.ts,server/vite.ts"
     }
   },
   "headers": [
