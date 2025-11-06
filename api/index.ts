@@ -102,5 +102,6 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 
 // Export the Express app as a serverless function
 // Vercel will handle routing /api/* requests to this function
+// The app handles all routes including /api/contact, /api/test, etc.
 export default app;
 

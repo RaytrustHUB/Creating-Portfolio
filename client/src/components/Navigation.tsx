@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link, useLocation } from "wouter";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -32,6 +33,7 @@ const menuItemVariants = {
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
+  const [location] = useLocation();
 
   const menuItems = [
     { label: "Home", href: "/" },
@@ -48,15 +50,15 @@ export default function Navigation() {
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
       <nav className="container mx-auto px-4 h-16 flex items-center justify-between bg-background/80 backdrop-blur-sm">
-        <motion.a 
-          href="/"
-          className="text-2xl font-bold text-foreground hover:text-primary"
+        <motion.div
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
-          Portfolio
-        </motion.a>
+          <Link href="/" className="text-2xl font-bold text-foreground hover:text-primary">
+            Portfolio
+          </Link>
+        </motion.div>
 
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center space-x-8">
@@ -82,13 +84,10 @@ export default function Navigation() {
                   visible: { y: 0, opacity: 1 }
                 }}
               >
-                <motion.a
-                  href={item.href}
-                  className="nav-link text-muted-foreground hover:text-foreground px-1 relative inline-block"
+                <motion.div
                   whileHover={{ 
                     y: -2, 
                     scale: 1.1,
-                    color: "hsl(var(--primary))",
                   }}
                   whileTap={{ scale: 0.95 }}
                   transition={{ 
@@ -97,25 +96,36 @@ export default function Navigation() {
                     damping: 17,
                     duration: 0.2 
                   }}
+                  className="relative"
                 >
-                  {item.label}
-                  <motion.span
-                    className="absolute bottom-0 left-0 w-full h-0.5 bg-primary"
-                    initial={{ scaleX: 0, originX: 0 }}
-                    whileHover={{ scaleX: 1 }}
-                    transition={{ 
-                      type: "spring",
-                      stiffness: 400,
-                      damping: 25,
-                    }}
-                  />
-                  <motion.span
-                    className="absolute inset-0 bg-primary/5 rounded"
-                    initial={{ scale: 0, opacity: 0 }}
-                    whileHover={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.2 }}
-                  />
-                </motion.a>
+                  <Link 
+                    href={item.href}
+                    className={`nav-link px-1 relative inline-block ${
+                      location === item.href 
+                        ? "text-foreground" 
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {item.label}
+                    {location === item.href && (
+                      <motion.span
+                        className="absolute bottom-0 left-0 w-full h-0.5 bg-primary"
+                        layoutId="activeTab"
+                        transition={{ 
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 25,
+                        }}
+                      />
+                    )}
+                    <motion.span
+                      className="absolute inset-0 bg-primary/5 rounded"
+                      initial={{ scale: 0, opacity: 0 }}
+                      whileHover={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.2 }}
+                    />
+                  </Link>
+                </motion.div>
               </motion.li>
             ))}
           </motion.ul>
@@ -181,13 +191,17 @@ export default function Navigation() {
                     custom={index}
                     variants={menuItemVariants}
                   >
-                    <a
+                    <Link 
                       href={item.href}
-                      className="block nav-link text-muted-foreground hover:text-foreground text-lg font-medium"
+                      className={`block nav-link text-lg font-medium ${
+                        location === item.href 
+                          ? "text-foreground" 
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
                       onClick={() => setIsOpen(false)}
                     >
                       {item.label}
-                    </a>
+                    </Link>
                   </motion.li>
                 ))}
               </motion.ul>

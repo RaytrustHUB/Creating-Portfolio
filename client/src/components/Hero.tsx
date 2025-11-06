@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
@@ -53,10 +54,10 @@ export default function Hero() {
             transition={{ delay: 0.6 }}
           >
             <Button asChild size="lg">
-              <a href="projects#">
+              <Link href="/projects">
                 View My Work
                 <ArrowRight className="ml-2 h-4 w-4" />
-              </a>
+              </Link>
             </Button>
           </motion.div>
         </div>
