@@ -5,6 +5,25 @@ import { registerRoutes } from "../server/routes";
 // Initialize express app first
 const app = express();
 
+// Import and register routes with error handling
+let routesRegistered = false;
+let registerRoutesError: Error | null = null;
+
+// Wrap route registration in try-catch to handle initialization errors
+try {
+  // Register routes - this may fail if routes have errors
+  registerRoutes(app);
+  routesRegistered = true;
+  console.log("Routes registered successfully");
+} catch (error) {
+  registerRoutesError = error instanceof Error ? error : new Error(String(error));
+  console.error("Error registering routes:", registerRoutesError);
+  console.error("Error message:", registerRoutesError.message);
+  console.error("Error stack:", registerRoutesError.stack || "No stack");
+  routesRegistered = false;
+  // Don't throw - let the app continue with fallback routes
+}
+
 // Verify required environment variables (Vercel provides these automatically)
 // Only log warnings, don't throw errors to allow graceful degradation
 const requiredEnvVars = ['DATABASE_URL', 'OPENWEATHER_API_KEY'];
@@ -67,19 +86,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Register routes AFTER middleware is set up
-// Use synchronous import to avoid top-level await issues
-let routesRegistered = false;
-try {
-  registerRoutes(app);
-  routesRegistered = true;
-  console.log("Routes registered successfully");
-} catch (error) {
-  console.error("Error registering routes:", error);
-  console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
-  routesRegistered = false;
-  // Don't throw - let the app continue with fallback routes
-}
+// Routes are registered above with error handling
 
 // Test endpoint to verify API is working
 app.get("/api/test", (_req, res) => {
@@ -97,8 +104,10 @@ app.use("/api/*", (req, res) => {
     console.error("Routes were not registered - this is a critical error");
     return res.status(500).json({ 
       error: "Routes failed to initialize",
+      message: registerRoutesError?.message || "Unknown error during route registration",
       method: req.method,
-      path: req.path
+      path: req.path,
+      stack: process.env.NODE_ENV === "development" ? registerRoutesError?.stack : undefined
     });
   }
   console.log("Unhandled API route:", req.method, req.path);
