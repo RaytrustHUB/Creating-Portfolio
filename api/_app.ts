@@ -13,19 +13,8 @@ for (const envVar of requiredEnvVars) {
   }
 }
 
-// Register routes with error handling
-// Use synchronous import to avoid top-level await issues
-let routesRegistered = false;
-try {
-  registerRoutes(app);
-  routesRegistered = true;
-  console.log("Routes registered successfully");
-} catch (error) {
-  console.error("Error registering routes:", error);
-  console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
-  routesRegistered = false;
-  // Don't throw - let the app continue with fallback routes
-}
+// IMPORTANT: Middleware must be registered BEFORE routes
+// This ensures middleware (CORS, body parsing, logging) runs before route handlers
 
 // CORS middleware for serverless functions
 app.use((req, res, next) => {
@@ -41,11 +30,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// Basic middleware
+// Basic middleware - body parsing must happen before routes access req.body
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Request logging middleware
+// Request logging middleware - should log all requests
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -75,6 +64,20 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// Register routes AFTER middleware is set up
+// Use synchronous import to avoid top-level await issues
+let routesRegistered = false;
+try {
+  registerRoutes(app);
+  routesRegistered = true;
+  console.log("Routes registered successfully");
+} catch (error) {
+  console.error("Error registering routes:", error);
+  console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
+  routesRegistered = false;
+  // Don't throw - let the app continue with fallback routes
+}
 
 // Test endpoint to verify API is working
 app.get("/api/test", (_req, res) => {
