@@ -262,7 +262,7 @@ export function registerRoutes(app: Express): Server {
       const snippetData = validatedData;
 
       // Start a transaction to ensure all operations succeed or fail together
-      const result = await db.transaction(async (tx) => {
+      const result = await db.transaction(async (tx: typeof db) => {
         // Insert the snippet
         const [newSnippet] = await tx
           .insert(snippets)
@@ -317,7 +317,7 @@ export function registerRoutes(app: Express): Server {
       const validatedData = insertSnippetSchema.parse(bodyWithoutTags);
       const snippetData = validatedData;
 
-      const result = await db.transaction(async (tx) => {
+      const result = await db.transaction(async (tx: typeof db) => {
         // Update snippet
         const [updatedSnippet] = await tx
           .update(snippets)

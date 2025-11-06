@@ -37,19 +37,32 @@ export default function Contact() {
 
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error || "Failed to send message";
-        throw new Error(errorMessage);
+      try {
+        const response = await fetch("/api/contact", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(values),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+          console.error("Contact form error:", {
+            status: response.status,
+            statusText: response.statusText,
+            errorData,
+          });
+          throw new Error(errorMessage);
+        }
+        
+        return response.json();
+      } catch (error) {
+        console.error("Contact form fetch error:", error);
+        if (error instanceof Error) {
+          throw error;
+        }
+        throw new Error("Network error: Failed to connect to server");
       }
-      
-      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -59,6 +72,7 @@ export default function Contact() {
       form.reset();
     },
     onError: (error: Error) => {
+      console.error("Contact form mutation error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to send message. Please try again.",

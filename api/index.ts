@@ -13,6 +13,20 @@ for (const envVar of requiredEnvVars) {
 // Initialize express app
 const app = express();
 
+// CORS middleware for serverless functions
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  
+  // Handle preflight requests
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
+
 // Basic middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -48,8 +62,28 @@ app.use((req, res, next) => {
   next();
 });
 
+// Test endpoint to verify API is working
+app.get("/api/test", (_req, res) => {
+  res.json({ 
+    status: "ok", 
+    message: "API is working",
+    timestamp: new Date().toISOString(),
+    hasDatabaseUrl: !!process.env.DATABASE_URL
+  });
+});
+
 // Register routes (ignore the server return value for serverless)
 registerRoutes(app);
+
+// Catch-all route for debugging - should not be reached if routes are registered correctly
+app.use("/api/*", (req, res) => {
+  console.log("Unhandled API route:", req.method, req.path);
+  res.status(404).json({ 
+    error: "Route not found",
+    method: req.method,
+    path: req.path
+  });
+});
 
 // Global error handling middleware
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
