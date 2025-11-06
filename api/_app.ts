@@ -5,11 +5,13 @@ import { registerRoutes } from "../server/routes";
 // Initialize express app first
 const app = express();
 
-// Verify required environment variables
+// Verify required environment variables (Vercel provides these automatically)
+// Only log warnings, don't throw errors to allow graceful degradation
 const requiredEnvVars = ['DATABASE_URL', 'OPENWEATHER_API_KEY'];
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
     console.error(`WARNING: ${envVar} environment variable is not set`);
+    console.error('Make sure to set environment variables in Vercel dashboard');
   }
 }
 

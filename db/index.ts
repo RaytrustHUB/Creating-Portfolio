@@ -1,16 +1,15 @@
 import { drizzle } from "drizzle-orm/neon-serverless";
 import * as schema from "@db/schema";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 // Check for DATABASE_URL but don't throw at module load time for serverless
+// Vercel automatically provides environment variables, no need for dotenv
 if (!process.env.DATABASE_URL) {
   console.error("WARNING: DATABASE_URL is not set. Database operations will fail.");
 }
 
 // Initialize database connection
 // For serverless, this will be initialized on first use
+// Using neon-serverless which is optimized for serverless environments
 export const db = process.env.DATABASE_URL
   ? drizzle(process.env.DATABASE_URL, {
       schema,
