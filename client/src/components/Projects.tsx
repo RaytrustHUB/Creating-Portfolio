@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "wouter";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,10 +25,16 @@ export default function Projects() {
   };
 
   const handleCodeClick = (projectTitle: string) => {
-    const code = projectCodeMap[projectTitle];
-    if (code) {
-      setSelectedProjectCode({ title: projectTitle, code });
-      setCodeDialogOpen(true);
+    try {
+      const code = projectCodeMap[projectTitle];
+      if (code) {
+        setSelectedProjectCode({ title: projectTitle, code });
+        setCodeDialogOpen(true);
+      } else {
+        console.warn(`Code not found for project: ${projectTitle}`);
+      }
+    } catch (error) {
+      console.error("Error loading project code:", error);
     }
   };
 
@@ -168,10 +175,10 @@ export default function Projects() {
                         Code
                       </Button>
                       <Button size="sm" asChild>
-                        <a href={project.demo}>
+                        <Link href={project.demo}>
                           <ExternalLink className="h-4 w-4 mr-2" />
                           Demo
-                        </a>
+                        </Link>
                       </Button>
                     </CardFooter>
                   </Card>
