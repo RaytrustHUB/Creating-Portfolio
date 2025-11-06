@@ -1,28 +1,42 @@
 import { Switch, Route } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
-import Home from "./pages/Home";
-import About from "./pages/About";
-import Projects from "./pages/Projects";
-import Contact from "./pages/Contact";
-import WeatherDashboard from "./pages/WeatherDashboard";
-import SnippetsPage from "./pages/SnippetsPage";
-import TaskManagerPage from "./pages/TaskManagerPage";
-import PasswordGeneratorPage from "./pages/PasswordGeneratorPage";
+import { lazy, Suspense } from "react";
+
+// Lazy load pages for code splitting - reduces initial bundle size
+const Home = lazy(() => import("./pages/Home"));
+const About = lazy(() => import("./pages/About"));
+const Projects = lazy(() => import("./pages/Projects"));
+const Contact = lazy(() => import("./pages/Contact"));
+const WeatherDashboard = lazy(() => import("./pages/WeatherDashboard"));
+const SnippetsPage = lazy(() => import("./pages/SnippetsPage"));
+const TaskManagerPage = lazy(() => import("./pages/TaskManagerPage"));
+const PasswordGeneratorPage = lazy(() => import("./pages/PasswordGeneratorPage"));
+
+// Loading component for lazy-loaded routes
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+    </div>
+  );
+}
 
 function App() {
   return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/about" component={About} />
-      <Route path="/projects" component={Projects} />
-      <Route path="/contact" component={Contact} />
-      <Route path="/projects/weather" component={WeatherDashboard} />
-      <Route path="/projects/snippets" component={SnippetsPage} />
-      <Route path="/projects/tasks" component={TaskManagerPage} />
-      <Route path="/projects/password-generator" component={PasswordGeneratorPage} />
-      <Route component={NotFound} />
-    </Switch>
+    <Suspense fallback={<LoadingFallback />}>
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/about" component={About} />
+        <Route path="/projects" component={Projects} />
+        <Route path="/contact" component={Contact} />
+        <Route path="/projects/weather" component={WeatherDashboard} />
+        <Route path="/projects/snippets" component={SnippetsPage} />
+        <Route path="/projects/tasks" component={TaskManagerPage} />
+        <Route path="/projects/password-generator" component={PasswordGeneratorPage} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 
