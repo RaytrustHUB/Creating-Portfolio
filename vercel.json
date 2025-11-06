@@ -14,10 +14,7 @@
   "functions": {
     "api/[...].ts": {
       "maxDuration": 30,
-      "includeFiles": [
-        "server/**",
-        "db/**"
-      ],
+      "includeFiles": "server/**,db/**",
       "excludeFiles": "server/index.ts,server/vite.ts"
     }
   },
