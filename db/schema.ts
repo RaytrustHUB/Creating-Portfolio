@@ -2,6 +2,9 @@ import { pgTable, text, serial, timestamp, integer, boolean, jsonb } from "drizz
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Messages table for contact form
 export const messages = pgTable("messages", {

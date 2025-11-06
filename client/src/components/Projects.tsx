@@ -3,10 +3,33 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Github, ExternalLink, X } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState } from "react";
+import { CodeViewerDialog } from "@/components/CodeViewerDialog";
+import passwordGeneratorCode from "@/components/projects/PasswordGenerator.tsx?raw";
+import weatherDashboardCode from "@/components/projects/WeatherDashboard.tsx?raw";
+import taskManagerCode from "@/components/projects/TaskManager.tsx?raw";
+import codeSnippetLibraryCode from "@/components/snippets/CodeSnippetLibrary.tsx?raw";
 
 export default function Projects() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [codeDialogOpen, setCodeDialogOpen] = useState(false);
+  const [selectedProjectCode, setSelectedProjectCode] = useState<{ title: string; code: string } | null>(null);
+
+  // Map project titles to their code files
+  const projectCodeMap: Record<string, string> = {
+    "Weather Dashboard": weatherDashboardCode,
+    "Task Manager": taskManagerCode,
+    "Code Snippet Library": codeSnippetLibraryCode,
+    "Password Generator": passwordGeneratorCode,
+  };
+
+  const handleCodeClick = (projectTitle: string) => {
+    const code = projectCodeMap[projectTitle];
+    if (code) {
+      setSelectedProjectCode({ title: projectTitle, code });
+      setCodeDialogOpen(true);
+    }
+  };
 
   const projects = [
     {
@@ -136,11 +159,13 @@ export default function Projects() {
                       </div>
                     </CardContent>
                     <CardFooter className="gap-4">
-                      <Button variant="outline" size="sm" asChild>
-                        <a href={project.github} target="_blank" rel="noopener">
-                          <Github className="h-4 w-4 mr-2" />
-                          Code
-                        </a>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleCodeClick(project.title)}
+                      >
+                        <Github className="h-4 w-4 mr-2" />
+                        Code
                       </Button>
                       <Button size="sm" asChild>
                         <a href={project.demo}>
@@ -155,6 +180,16 @@ export default function Projects() {
           </AnimatePresence>
         </div>
       </div>
+      
+      {selectedProjectCode && (
+        <CodeViewerDialog
+          open={codeDialogOpen}
+          onOpenChange={setCodeDialogOpen}
+          title={selectedProjectCode.title}
+          code={selectedProjectCode.code}
+          language="tsx"
+        />
+      )}
     </section>
   );
 }
