@@ -14,7 +14,17 @@ export function registerRoutes(app: Express): Server {
       console.log("Contact form submission received:", {
         body: req.body,
         headers: req.headers,
+        hasDatabaseUrl: !!process.env.DATABASE_URL,
       });
+
+      // Check if database is configured
+      if (!process.env.DATABASE_URL) {
+        console.error("DATABASE_URL is not set");
+        return res.status(500).json({ 
+          error: "Database not configured",
+          message: "DATABASE_URL environment variable is not set"
+        });
+      }
 
       // Validate the request body
       const validatedData = insertMessageSchema.parse(req.body);

@@ -5,7 +5,8 @@ import { registerRoutes } from "../server/routes";
 const requiredEnvVars = ['DATABASE_URL', 'OPENWEATHER_API_KEY'];
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
-    console.error(`${envVar} environment variable is required`);
+    console.error(`WARNING: ${envVar} environment variable is not set`);
+    // Don't throw here to allow the function to start, but log the warning
   }
 }
 
