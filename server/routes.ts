@@ -6,6 +6,9 @@ import { messages, weatherCache, snippets, tags, snippetTags, tasks } from "@db/
 import { insertMessageSchema, insertSnippetSchema, insertTagSchema } from "@db/schema";
 import { eq, and, gte, like, desc, or } from "drizzle-orm";
 import { sql } from "drizzle-orm";
+import dotenv from "dotenv";
+
+dotenv.config();  
 
 export function registerRoutes(app: Express): Server {
   // Contact form submission

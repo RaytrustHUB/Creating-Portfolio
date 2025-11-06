@@ -3,6 +3,9 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { db } from "@db";
 import { sql } from "drizzle-orm";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Verify required environment variables
 const requiredEnvVars = ['DATABASE_URL', 'OPENWEATHER_API_KEY'];
