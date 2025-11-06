@@ -5,25 +5,6 @@ import { registerRoutes } from "../server/routes";
 // Initialize express app first
 const app = express();
 
-// Import and register routes with error handling
-let routesRegistered = false;
-let registerRoutesError: Error | null = null;
-
-// Wrap route registration in try-catch to handle initialization errors
-try {
-  // Register routes - this may fail if routes have errors
-  registerRoutes(app);
-  routesRegistered = true;
-  console.log("Routes registered successfully");
-} catch (error) {
-  registerRoutesError = error instanceof Error ? error : new Error(String(error));
-  console.error("Error registering routes:", registerRoutesError);
-  console.error("Error message:", registerRoutesError.message);
-  console.error("Error stack:", registerRoutesError.stack || "No stack");
-  routesRegistered = false;
-  // Don't throw - let the app continue with fallback routes
-}
-
 // Verify required environment variables (Vercel provides these automatically)
 // Only log warnings, don't throw errors to allow graceful degradation
 const requiredEnvVars = ['DATABASE_URL', 'OPENWEATHER_API_KEY'];
@@ -86,7 +67,25 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes are registered above with error handling
+// Import and register routes with error handling
+// Routes are registered AFTER middleware is set up
+let routesRegistered = false;
+let registerRoutesError: Error | null = null;
+
+// Wrap route registration in try-catch to handle initialization errors
+try {
+  // Register routes - this may fail if routes have errors
+  registerRoutes(app);
+  routesRegistered = true;
+  console.log("Routes registered successfully");
+} catch (error) {
+  registerRoutesError = error instanceof Error ? error : new Error(String(error));
+  console.error("Error registering routes:", registerRoutesError);
+  console.error("Error message:", registerRoutesError.message);
+  console.error("Error stack:", registerRoutesError.stack || "No stack");
+  routesRegistered = false;
+  // Don't throw - let the app continue with fallback routes
+}
 
 // Test endpoint to verify API is working
 app.get("/api/test", (_req, res) => {

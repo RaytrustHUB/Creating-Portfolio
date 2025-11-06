@@ -30,7 +30,9 @@ export default function handler(req: any, res: any) {
     const error = (err: Error) => {
       if (!resolved) {
         resolved = true;
-        reject(err);
+        console.error("Response error:", err);
+        // Don't reject - resolve instead to prevent unhandled promise rejection
+        resolve();
       }
     };
     
@@ -38,6 +40,26 @@ export default function handler(req: any, res: any) {
     res.once('finish', finish);
     res.once('close', finish);
     res.once('error', error);
+    
+    // Catch unhandled promise rejections in route handlers
+    const unhandledRejection = (reason: any) => {
+      console.error("Unhandled promise rejection in handler:", reason);
+      if (!resolved && !res.headersSent) {
+        resolved = true;
+        res.status(500).json({
+          error: "Internal server error",
+          message: reason instanceof Error ? reason.message : String(reason)
+        });
+        resolve();
+      }
+    };
+    
+    // Set up unhandled rejection handler for this request
+    process.once('unhandledRejection', unhandledRejection);
+    
+    // Clean up handler when request finishes
+    res.once('finish', () => process.removeListener('unhandledRejection', unhandledRejection));
+    res.once('close', () => process.removeListener('unhandledRejection', unhandledRejection));
     
     // Set a timeout to prevent hanging (30 seconds max)
     const timeout = setTimeout(() => {
