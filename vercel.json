@@ -13,8 +13,14 @@
   "functions": {
     "api/[...].ts": {
       "maxDuration": 30,
-      "includeFiles": "server/**",
-      "excludeFiles": "server/index.ts"
+      "includeFiles": [
+        "server/**",
+        "db/**"
+      ],
+      "excludeFiles": [
+        "server/index.ts",
+        "server/vite.ts"
+      ]
     }
   },
   "headers": [

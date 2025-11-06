@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/neon-serverless";
-import * as schema from "@db/schema";
+import * as schema from "./schema";
 
 // Check for DATABASE_URL but don't throw at module load time for serverless
 // Vercel automatically provides environment variables, no need for dotenv

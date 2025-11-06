@@ -1,9 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { ZodError } from "zod";
-import { db } from "@db";
-import { messages, weatherCache, snippets, tags, snippetTags, tasks } from "@db/schema";
-import { insertMessageSchema, insertSnippetSchema, insertTagSchema } from "@db/schema";
+import { db } from "../db/index";
+import { messages, weatherCache, snippets, tags, snippetTags, tasks } from "../db/schema";
+import { insertMessageSchema, insertSnippetSchema, insertTagSchema } from "../db/schema";
 import { eq, and, gte, like, desc, or } from "drizzle-orm";
 import { sql } from "drizzle-orm";  
 
