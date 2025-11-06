@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import CodeEditor from "@uiw/react-textarea-code-editor";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 const snippetFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -48,6 +49,7 @@ interface SnippetDialogProps {
 
 export function SnippetDialog({ open, onOpenChange, snippet }: SnippetDialogProps) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const form = useForm<SnippetFormValues>({
     resolver: zodResolver(snippetFormSchema),
     defaultValues: snippet || {
@@ -66,13 +68,35 @@ export function SnippetDialog({ open, onOpenChange, snippet }: SnippetDialogProp
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
-      if (!response.ok) throw new Error("Failed to create snippet");
+      if (!response.ok) {
+        // Try to extract error message from response
+        let errorMessage = "Failed to create snippet";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(`${errorMessage} (${response.status})`);
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["snippets"] });
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
       onOpenChange(false);
       form.reset();
+      toast({
+        title: "Success",
+        description: "Snippet created successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create snippet",
+        variant: "destructive",
+      });
     },
   });
 
@@ -83,12 +107,34 @@ export function SnippetDialog({ open, onOpenChange, snippet }: SnippetDialogProp
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
-      if (!response.ok) throw new Error("Failed to update snippet");
+      if (!response.ok) {
+        // Try to extract error message from response
+        let errorMessage = "Failed to update snippet";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(`${errorMessage} (${response.status})`);
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["snippets"] });
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
       onOpenChange(false);
+      toast({
+        title: "Success",
+        description: "Snippet updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update snippet",
+        variant: "destructive",
+      });
     },
   });
 

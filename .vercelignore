@@ -1,0 +1,42 @@
+# Vercel ignore file - files/folders to exclude from deployment
+
+# Development files
+server/
+scripts/
+attached_assets/
+
+# Build artifacts (will be regenerated)
+dist/
+
+# Documentation
+*.md
+!README.md
+
+# Environment files (should be set in Vercel dashboard)
+.env*
+!.env.example
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+generated-icon.png
+

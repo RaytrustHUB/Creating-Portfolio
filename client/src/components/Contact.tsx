@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
@@ -11,17 +10,19 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Send, Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const formSchema = z.object({
-  name: z.string().min(2, "Name is required"),
-  email: z.string().email("Invalid email address"),
-  message: z.string().min(10, "Message must be at least 10 characters"),
+  name: z.string().min(2, "Name must be at least 2 characters").max(100, "Name is too long"),
+  email: z.string().email("Please enter a valid email address"),
+  message: z.string().min(10, "Message must be at least 10 characters").max(1000, "Message is too long"),
 });
 
 export default function Contact() {
@@ -37,32 +38,39 @@ export default function Contact() {
 
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      try {
-        const response = await fetch("/api/contact", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
-        });
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      
+      if (!response.ok) {
+        // Try to extract error message from response
+        let errorMessage = "Failed to send message";
+        let validationErrors: any = null;
         
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          const errorMessage = errorData.error || errorData.message || `HTTP ${response.status}: ${response.statusText}`;
-          console.error("Contact form error:", {
-            status: response.status,
-            statusText: response.statusText,
-            errorData,
-          });
-          throw new Error(errorMessage);
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+          
+          // Check if there are validation details (from ZodError)
+          if (errorData.details && Array.isArray(errorData.details)) {
+            validationErrors = errorData.details;
+          }
+        } catch {
+          // If response isn't JSON, use status text
+          errorMessage = response.statusText || errorMessage;
         }
         
-        return response.json();
-      } catch (error) {
-        console.error("Contact form fetch error:", error);
-        if (error instanceof Error) {
-          throw error;
+        const error = new Error(`${errorMessage} (${response.status})`) as any;
+        if (validationErrors) {
+          error.validationErrors = validationErrors;
         }
-        throw new Error("Network error: Failed to connect to server");
+        
+        throw error;
       }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -71,13 +79,39 @@ export default function Contact() {
       });
       form.reset();
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       console.error("Contact form mutation error:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send message. Please try again.",
-        variant: "destructive",
-      });
+      
+      // Handle validation errors from API
+      if (error.validationErrors && Array.isArray(error.validationErrors)) {
+        const fieldErrors: Record<string, string> = {};
+        error.validationErrors.forEach((err: any) => {
+          if (err.path && err.path.length > 0) {
+            const fieldName = err.path[0] as string;
+            fieldErrors[fieldName] = err.message || "Invalid value";
+          }
+        });
+        
+        // Set form errors
+        Object.keys(fieldErrors).forEach((field) => {
+          form.setError(field as any, {
+            type: "server",
+            message: fieldErrors[field],
+          });
+        });
+        
+        toast({
+          title: "Validation Error",
+          description: "Please check the form fields and try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to send message. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -90,16 +124,19 @@ export default function Contact() {
       icon: Mail,
       label: "Email",
       value: "contact@example.com",
+      href: "mailto:contact@example.com",
     },
     {
       icon: Phone,
       label: "Phone",
       value: "+1 (555) 123-4567",
+      href: "tel:+15551234567",
     },
     {
       icon: MapPin,
       label: "Location",
       value: "San Francisco, CA",
+      href: null,
     },
   ];
 
@@ -126,18 +163,42 @@ export default function Contact() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <div className="space-y-8">
-              {contactInfo.map((item) => (
-                <div key={item.label} className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <item.icon className="h-6 w-6 text-primary" />
+            <div className="space-y-6">
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold mb-2">Contact Information</h3>
+                <p className="text-muted-foreground">
+                  Feel free to reach out through the form or use the contact details below.
+                </p>
+              </div>
+              {contactInfo.map((item) => {
+                const content = (
+                  <div className="flex items-center gap-4 p-4 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <item.icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-medium text-sm text-muted-foreground">{item.label}</h3>
+                      <p className="text-base font-medium">{item.value}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-medium">{item.label}</h3>
-                    <p className="text-muted-foreground">{item.value}</p>
+                );
+
+                return item.href ? (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    className="block"
+                    target={item.href.startsWith("mailto:") || item.href.startsWith("tel:") ? undefined : "_blank"}
+                    rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                  >
+                    {content}
+                  </a>
+                ) : (
+                  <div key={item.label}>
+                    {content}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
 
@@ -156,8 +217,16 @@ export default function Contact() {
                     <FormItem>
                       <FormLabel>Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Your name" {...field} />
+                        <Input 
+                          placeholder="Your name" 
+                          {...field} 
+                          disabled={mutation.isPending}
+                          autoComplete="name"
+                        />
                       </FormControl>
+                      <FormDescription>
+                        Your full name (2-100 characters)
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -170,8 +239,17 @@ export default function Contact() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="Your email" {...field} />
+                        <Input 
+                          type="email"
+                          placeholder="your.email@example.com" 
+                          {...field} 
+                          disabled={mutation.isPending}
+                          autoComplete="email"
+                        />
                       </FormControl>
+                      <FormDescription>
+                        Your email address where I can reach you
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -185,22 +263,48 @@ export default function Contact() {
                       <FormLabel>Message</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Your message"
-                          className="min-h-[120px]"
+                          placeholder="Tell me about your project, question, or just say hello!"
+                          className="min-h-[120px] resize-y"
                           {...field}
+                          disabled={mutation.isPending}
+                          maxLength={1000}
                         />
                       </FormControl>
+                      <FormDescription>
+                        {field.value?.length || 0} / 1000 characters (minimum 10)
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
+                {mutation.isError && !(mutation.error as any)?.validationErrors && (
+                  <Alert variant="destructive">
+                    <AlertDescription>
+                      {mutation.error instanceof Error 
+                        ? mutation.error.message 
+                        : "Failed to send message. Please try again."}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <Button
                   type="submit"
                   className="w-full"
                   disabled={mutation.isPending}
+                  size="lg"
                 >
-                  {mutation.isPending ? "Sending..." : "Send Message"}
+                  {mutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="mr-2 h-4 w-4" />
+                      Send Message
+                    </>
+                  )}
                 </Button>
               </form>
             </Form>

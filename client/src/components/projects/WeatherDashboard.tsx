@@ -26,13 +26,21 @@ export default function WeatherDashboard() {
   const [city, setCity] = useState("San Francisco");
   const [searchQuery, setSearchQuery] = useState(city);
 
-  const { data: weather, isLoading, error } = useQuery<WeatherData>({
+  const { data: weather, isLoading, isError, error } = useQuery<WeatherData>({
     queryKey: ["/api/weather", searchQuery],
     queryFn: async () => {
       const response = await fetch(`/api/weather?city=${encodeURIComponent(searchQuery)}`);
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch weather data");
+        // Try to extract error message from response
+        let errorMessage = "Failed to fetch weather data";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          // If response isn't JSON, use status text
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(`${errorMessage} (${response.status})`);
       }
       return response.json();
     },
@@ -90,14 +98,17 @@ export default function WeatherDashboard() {
               </div>
             </CardContent>
           </Card>
-        ) : error ? (
+        ) : isError ? (
           <Card>
             <CardContent className="p-6">
               <div className="flex flex-col items-center gap-4">
-                <p className="text-destructive text-center">
-                  {error instanceof Error && error.message.includes("API key") 
-                    ? "Weather API key not configured. Please contact the administrator."
-                    : "Failed to load weather data. Please try again later."}
+                <p className="text-destructive text-center font-semibold">
+                  Failed to load weather data
+                </p>
+                <p className="text-sm text-muted-foreground text-center">
+                  {error instanceof Error 
+                    ? error.message 
+                    : "An unexpected error occurred. Please try again later."}
                 </p>
                 <Button 
                   variant="outline" 

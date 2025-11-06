@@ -71,11 +71,22 @@ export default function TaskManager() {
     },
   });
 
-  const { data: tasks, isLoading } = useQuery<Task[]>({
+  const { data: tasks, isLoading, isError, error } = useQuery<Task[]>({
     queryKey: ["tasks"],
     queryFn: async () => {
       const response = await fetch("/api/tasks");
-      if (!response.ok) throw new Error("Failed to fetch tasks");
+      if (!response.ok) {
+        // Try to extract error message from response
+        let errorMessage = "Failed to fetch tasks";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          // If response isn't JSON, use status text
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(`${errorMessage} (${response.status})`);
+      }
       return response.json();
     },
   });
@@ -87,7 +98,17 @@ export default function TaskManager() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
-      if (!response.ok) throw new Error("Failed to create task");
+      if (!response.ok) {
+        // Try to extract error message from response
+        let errorMessage = "Failed to create task";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(`${errorMessage} (${response.status})`);
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -99,6 +120,13 @@ export default function TaskManager() {
         description: "Task created successfully",
       });
     },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create task",
+        variant: "destructive",
+      });
+    },
   });
 
   const updateTask = useMutation({
@@ -108,7 +136,17 @@ export default function TaskManager() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
-      if (!response.ok) throw new Error("Failed to update task");
+      if (!response.ok) {
+        // Try to extract error message from response
+        let errorMessage = "Failed to update task";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(`${errorMessage} (${response.status})`);
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -121,6 +159,13 @@ export default function TaskManager() {
         description: "Task updated successfully",
       });
     },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update task",
+        variant: "destructive",
+      });
+    },
   });
 
   const deleteTask = useMutation({
@@ -128,7 +173,17 @@ export default function TaskManager() {
       const response = await fetch(`/api/tasks/${id}`, {
         method: "DELETE",
       });
-      if (!response.ok) throw new Error("Failed to delete task");
+      if (!response.ok) {
+        // Try to extract error message from response
+        let errorMessage = "Failed to delete task";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(`${errorMessage} (${response.status})`);
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -136,6 +191,13 @@ export default function TaskManager() {
       toast({
         title: "Success",
         description: "Task deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete task",
+        variant: "destructive",
       });
     },
   });
@@ -178,6 +240,32 @@ export default function TaskManager() {
           New Task
         </Button>
       </div>
+
+      {isLoading && (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Loading tasks...</p>
+        </div>
+      )}
+
+      {isError && (
+        <div className="bg-destructive/10 border border-destructive rounded-lg p-4 mb-4">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <div>
+              <p className="font-semibold text-destructive">Failed to load tasks</p>
+              <p className="text-sm text-muted-foreground">
+                {error instanceof Error ? error.message : "An unexpected error occurred"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!isLoading && !isError && (!tasks || tasks.length === 0) && (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">No tasks yet. Create your first task!</p>
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {tasks?.map((task) => (
