@@ -1,5 +1,6 @@
 // Shared Express app setup for Vercel serverless functions
 import express, { type Request, Response, NextFunction } from "express";
+import { registerRoutes } from "../server/routes";
 
 // Initialize express app first
 const app = express();
@@ -13,9 +14,9 @@ for (const envVar of requiredEnvVars) {
 }
 
 // Register routes with error handling
+// Use synchronous import to avoid top-level await issues
 let routesRegistered = false;
 try {
-  const { registerRoutes } = await import("../server/routes");
   registerRoutes(app);
   routesRegistered = true;
   console.log("Routes registered successfully");
@@ -23,6 +24,7 @@ try {
   console.error("Error registering routes:", error);
   console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
   routesRegistered = false;
+  // Don't throw - let the app continue with fallback routes
 }
 
 // CORS middleware for serverless functions
