@@ -1,6 +1,8 @@
 // Shared Express app setup for Vercel serverless functions
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "../server/routes";
+
+// Initialize express app first
+const app = express();
 
 // Verify required environment variables
 const requiredEnvVars = ['DATABASE_URL', 'OPENWEATHER_API_KEY'];
@@ -10,8 +12,18 @@ for (const envVar of requiredEnvVars) {
   }
 }
 
-// Initialize express app
-const app = express();
+// Register routes with error handling
+let routesRegistered = false;
+try {
+  const { registerRoutes } = await import("../server/routes");
+  registerRoutes(app);
+  routesRegistered = true;
+  console.log("Routes registered successfully");
+} catch (error) {
+  console.error("Error registering routes:", error);
+  console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
+  routesRegistered = false;
+}
 
 // CORS middleware for serverless functions
 app.use((req, res, next) => {
@@ -72,11 +84,16 @@ app.get("/api/test", (_req, res) => {
   });
 });
 
-// Register routes (ignore the server return value for serverless)
-registerRoutes(app);
-
 // Catch-all route for debugging - should not be reached if routes are registered correctly
 app.use("/api/*", (req, res) => {
+  if (!routesRegistered) {
+    console.error("Routes were not registered - this is a critical error");
+    return res.status(500).json({ 
+      error: "Routes failed to initialize",
+      method: req.method,
+      path: req.path
+    });
+  }
   console.log("Unhandled API route:", req.method, req.path);
   res.status(404).json({ 
     error: "Route not found",
