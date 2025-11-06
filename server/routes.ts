@@ -402,34 +402,98 @@ export function registerRoutes(app: Express): Server {
   // Get all tasks
   app.get("/api/tasks", async (_req, res) => {
     try {
+      // Check if database is configured
+      if (!process.env.DATABASE_URL) {
+        console.error("DATABASE_URL is not set");
+        return res.status(500).json({ 
+          error: "Database not configured",
+          message: "DATABASE_URL environment variable is not set"
+        });
+      }
+
+      // Check if db is available
+      if (!db) {
+        console.error("Database connection is not available");
+        return res.status(500).json({ 
+          error: "Database connection failed",
+          message: "Database connection is not available"
+        });
+      }
+
+      console.log("Fetching tasks from database...");
       const allTasks = await db
         .select()
         .from(tasks)
         .orderBy(desc(tasks.updatedAt));
+      
+      console.log(`Successfully fetched ${allTasks.length} tasks`);
       res.json(allTasks);
     } catch (error) {
       console.error("Fetch tasks error:", error);
-      res.status(500).json({ error: "Failed to fetch tasks" });
+      console.error("Error details:", error instanceof Error ? error.message : String(error));
+      console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
+      res.status(500).json({ 
+        error: "Failed to fetch tasks",
+        message: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
   // Create a new task
   app.post("/api/tasks", async (req, res) => {
     try {
+      console.log("Create task request received:", {
+        body: req.body,
+        hasDatabaseUrl: !!process.env.DATABASE_URL,
+      });
+
+      // Check if database is configured
+      if (!process.env.DATABASE_URL) {
+        console.error("DATABASE_URL is not set");
+        return res.status(500).json({ 
+          error: "Database not configured",
+          message: "DATABASE_URL environment variable is not set"
+        });
+      }
+
+      // Check if db is available
+      if (!db) {
+        console.error("Database connection is not available");
+        return res.status(500).json({ 
+          error: "Database connection failed",
+          message: "Database connection is not available"
+        });
+      }
+
+      // Validate required fields
+      if (!req.body.title || req.body.title.trim() === "") {
+        return res.status(400).json({ 
+          error: "Validation failed",
+          message: "Title is required"
+        });
+      }
+
       const [task] = await db
         .insert(tasks)
         .values({
           title: req.body.title,
-          description: req.body.description,
+          description: req.body.description || null,
           status: req.body.status || "pending",
           priority: req.body.priority || "medium",
           dueDate: req.body.dueDate ? new Date(req.body.dueDate) : null,
         })
         .returning();
+      
+      console.log("Task created successfully:", task);
       res.status(201).json(task);
     } catch (error) {
       console.error("Create task error:", error);
-      res.status(400).json({ error: "Failed to create task" });
+      console.error("Error details:", error instanceof Error ? error.message : String(error));
+      console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
+      res.status(400).json({ 
+        error: "Failed to create task",
+        message: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
