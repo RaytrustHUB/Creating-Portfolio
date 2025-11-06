@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { ZodError } from "zod";
 import { db } from "@db";
 import { messages, weatherCache, snippets, tags, snippetTags, tasks } from "@db/schema";
 import { insertMessageSchema, insertSnippetSchema, insertTagSchema } from "@db/schema";
@@ -15,7 +16,18 @@ export function registerRoutes(app: Express): Server {
       res.json({ success: true });
     } catch (error) {
       console.error("Contact form error:", error);
-      res.status(400).json({ error: "Invalid message data" });
+      
+      // Provide more detailed error messages for validation errors
+      if (error instanceof ZodError) {
+        return res.status(400).json({ 
+          error: "Validation failed",
+          details: error.errors
+        });
+      }
+      
+      res.status(400).json({ 
+        error: error instanceof Error ? error.message : "Invalid message data" 
+      });
     }
   });
 
@@ -114,7 +126,7 @@ export function registerRoutes(app: Express): Server {
       const search = req.query.search?.toString();
       const tag = req.query.tag?.toString();
 
-      let query = db
+      let baseQuery = db
         .select({
           id: snippets.id,
           title: snippets.title,
@@ -127,17 +139,18 @@ export function registerRoutes(app: Express): Server {
         })
         .from(snippets)
         .leftJoin(snippetTags, eq(snippets.id, snippetTags.snippetId))
-        .leftJoin(tags, eq(snippetTags.tagId, tags.id))
-        .groupBy(snippets.id);
+        .leftJoin(tags, eq(snippetTags.tagId, tags.id));
 
       if (search) {
-        query = query.where(
+        baseQuery = baseQuery.where(
           or(
             like(snippets.title, `%${search}%`),
             like(snippets.description, `%${search}%`)
           )
         );
       }
+
+      let query = baseQuery.groupBy(snippets.id);
 
       if (tag) {
         query = query.having(sql`${tag} = ANY(array_agg(${tags.name}))`);
@@ -186,8 +199,12 @@ export function registerRoutes(app: Express): Server {
   // Create a new snippet
   app.post("/api/snippets", async (req, res) => {
     try {
-      const validatedData = insertSnippetSchema.parse(req.body);
-      const { tags: tagNames, ...snippetData } = validatedData;
+      const body = req.body as { tags?: string[] } & Record<string, unknown>;
+      const tagNames = body.tags;
+      // Extract tags before validation since they're not part of the schema
+      const { tags: _, ...bodyWithoutTags } = body;
+      const validatedData = insertSnippetSchema.parse(bodyWithoutTags);
+      const snippetData = validatedData;
 
       // Start a transaction to ensure all operations succeed or fail together
       const result = await db.transaction(async (tx) => {
@@ -199,7 +216,7 @@ export function registerRoutes(app: Express): Server {
 
         if (tagNames && tagNames.length > 0) {
           // Insert or get existing tags
-          const tagPromises = tagNames.map(async (tagName) => {
+          const tagPromises = tagNames.map(async (tagName: string) => {
             const [tag] = await tx
               .insert(tags)
               .values({ name: tagName })
@@ -215,7 +232,7 @@ export function registerRoutes(app: Express): Server {
 
           // Create snippet-tag relationships
           await Promise.all(
-            resolvedTags.map((tag) =>
+            resolvedTags.map((tag: { id: number }) =>
               tx.insert(snippetTags).values({
                 snippetId: newSnippet.id,
                 tagId: tag.id
@@ -238,8 +255,12 @@ export function registerRoutes(app: Express): Server {
   app.put("/api/snippets/:id", async (req, res) => {
     try {
       const snippetId = parseInt(req.params.id);
-      const validatedData = insertSnippetSchema.parse(req.body);
-      const { tags: tagNames, ...snippetData } = validatedData;
+      const body = req.body as { tags?: string[] } & Record<string, unknown>;
+      const tagNames = body.tags;
+      // Extract tags before validation since they're not part of the schema
+      const { tags: _, ...bodyWithoutTags } = body;
+      const validatedData = insertSnippetSchema.parse(bodyWithoutTags);
+      const snippetData = validatedData;
 
       const result = await db.transaction(async (tx) => {
         // Update snippet
@@ -260,7 +281,7 @@ export function registerRoutes(app: Express): Server {
 
         if (tagNames && tagNames.length > 0) {
           // Insert or get existing tags
-          const tagPromises = tagNames.map(async (tagName) => {
+          const tagPromises = tagNames.map(async (tagName: string) => {
             const [tag] = await tx
               .insert(tags)
               .values({ name: tagName })
@@ -276,7 +297,7 @@ export function registerRoutes(app: Express): Server {
 
           // Create new snippet-tag relationships
           await Promise.all(
-            resolvedTags.map((tag) =>
+            resolvedTags.map((tag: { id: number }) =>
               tx.insert(snippetTags).values({
                 snippetId: updatedSnippet.id,
                 tagId: tag.id
@@ -291,7 +312,7 @@ export function registerRoutes(app: Express): Server {
       res.json(result);
     } catch (error) {
       console.error("Update snippet error:", error);
-      if (error.message === "Snippet not found") {
+      if (error instanceof Error && error.message === "Snippet not found") {
         res.status(404).json({ error: "Snippet not found" });
       } else {
         res.status(400).json({ error: "Failed to update snippet" });

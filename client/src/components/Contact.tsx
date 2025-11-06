@@ -44,7 +44,9 @@ export default function Contact() {
       });
       
       if (!response.ok) {
-        throw new Error("Failed to send message");
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || "Failed to send message";
+        throw new Error(errorMessage);
       }
       
       return response.json();
@@ -56,10 +58,10 @@ export default function Contact() {
       });
       form.reset();
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: error.message || "Failed to send message. Please try again.",
         variant: "destructive",
       });
     },
