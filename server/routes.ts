@@ -402,6 +402,8 @@ export function registerRoutes(app: Express): Server {
   // Get all tasks
   app.get("/api/tasks", async (_req, res) => {
     try {
+      console.log("GET /api/tasks - Request received");
+      
       // Check if database is configured
       if (!process.env.DATABASE_URL) {
         console.error("DATABASE_URL is not set");
@@ -421,21 +423,38 @@ export function registerRoutes(app: Express): Server {
       }
 
       console.log("Fetching tasks from database...");
-      const allTasks = await db
-        .select()
-        .from(tasks)
-        .orderBy(desc(tasks.updatedAt));
+      
+      // Wrap database query in try-catch to catch any connection errors
+      let allTasks;
+      try {
+        allTasks = await db
+          .select()
+          .from(tasks)
+          .orderBy(desc(tasks.updatedAt));
+      } catch (dbError) {
+        console.error("Database query error:", dbError);
+        console.error("Database error details:", dbError instanceof Error ? dbError.message : String(dbError));
+        console.error("Database error stack:", dbError instanceof Error ? dbError.stack : "No stack");
+        return res.status(500).json({ 
+          error: "Database query failed",
+          message: dbError instanceof Error ? dbError.message : String(dbError)
+        });
+      }
       
       console.log(`Successfully fetched ${allTasks.length} tasks`);
-      res.json(allTasks);
+      return res.json(allTasks);
     } catch (error) {
       console.error("Fetch tasks error:", error);
       console.error("Error details:", error instanceof Error ? error.message : String(error));
       console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
-      res.status(500).json({ 
-        error: "Failed to fetch tasks",
-        message: error instanceof Error ? error.message : String(error)
-      });
+      
+      // Make sure we send a response even if there's an error
+      if (!res.headersSent) {
+        return res.status(500).json({ 
+          error: "Failed to fetch tasks",
+          message: error instanceof Error ? error.message : String(error)
+        });
+      }
     }
   });
 

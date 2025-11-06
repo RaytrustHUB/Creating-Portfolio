@@ -88,17 +88,25 @@ export default function handler(req: any, res: any) {
       // Catch synchronous errors during handler execution
       clearTimeout(timeout);
       console.error("Handler error:", error);
+      console.error("Error type:", error?.constructor?.name);
       console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
+      
+      // Make sure we always send a response
       if (!res.headersSent) {
-        res.status(500).json({ 
-          error: "Internal server error",
-          message: error instanceof Error ? error.message : String(error)
-        });
+        try {
+          res.status(500).json({ 
+            error: "Internal server error",
+            message: error instanceof Error ? error.message : String(error)
+          });
+        } catch (sendError) {
+          console.error("Failed to send error response:", sendError);
+        }
       }
+      
       // Clean up timeout
       res.once('finish', () => clearTimeout(timeout));
       res.once('close', () => clearTimeout(timeout));
-      // Don't reject here - let the response finish
+      // Always resolve to prevent hanging
       finish();
     }
   });
