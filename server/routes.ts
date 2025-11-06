@@ -11,22 +11,67 @@ export function registerRoutes(app: Express): Server {
   // Contact form submission
   app.post("/api/contact", async (req, res) => {
     try {
+      console.log("Contact form submission received:", {
+        body: req.body,
+        headers: req.headers,
+      });
+
+      // Validate the request body
       const validatedData = insertMessageSchema.parse(req.body);
-      await db.insert(messages).values(validatedData);
-      res.json({ success: true });
+      console.log("Validation passed:", validatedData);
+
+      // Prepare data for insert (exclude createdAt if present, as it has a default)
+      const insertData = { ...validatedData };
+      if ('createdAt' in insertData) {
+        delete insertData.createdAt;
+      }
+
+      // Insert into database
+      const result = await db.insert(messages).values(insertData).returning();
+      console.log("Message inserted successfully:", result);
+
+      res.json({ success: true, message: "Message sent successfully" });
     } catch (error) {
       console.error("Contact form error:", error);
       
       // Provide more detailed error messages for validation errors
       if (error instanceof ZodError) {
+        console.error("Validation errors:", error.errors);
         return res.status(400).json({ 
           error: "Validation failed",
           details: error.errors
         });
       }
       
-      res.status(400).json({ 
-        error: error instanceof Error ? error.message : "Invalid message data" 
+      // Database errors
+      if (error instanceof Error) {
+        console.error("Error details:", {
+          message: error.message,
+          stack: error.stack,
+        });
+        return res.status(500).json({ 
+          error: "Failed to save message",
+          message: error.message
+        });
+      }
+      
+      res.status(500).json({ 
+        error: "An unexpected error occurred"
+      });
+    }
+  });
+
+  // Health check endpoint to test database connection
+  app.get("/api/health", async (_req, res) => {
+    try {
+      await db.execute(sql`SELECT 1`);
+      res.json({ status: "ok", database: "connected" });
+    } catch (error) {
+      console.error("Health check error:", error);
+      res.status(500).json({ 
+        status: "error", 
+        database: "disconnected",
+        error: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });
