@@ -4,7 +4,7 @@
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "dist/public",
   "installCommand": "npm install",
-  "framework": null,
+  "framework": "vite",
   "rewrites": [
     {
       "source": "/((?!api).*)",
